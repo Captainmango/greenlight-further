@@ -33,13 +33,16 @@ func main() {
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.Parse()
 
+	// Create the logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
+	// Create the application. Could have embedded the config, but we want to use DI to access these things really
 	app := &application{
 		config: cfg,
 		logger: logger,
 	}
 
+	// Mux behaves as a http handler func so is used in server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
 
