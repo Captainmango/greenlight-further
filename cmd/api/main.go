@@ -42,13 +42,9 @@ func main() {
 		logger: logger,
 	}
 
-	// Mux behaves as a http handler func so is used in server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
-
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.port),
-		Handler: mux,
+		Handler: app.routes(),
 		IdleTimeout: time.Minute,
 		ReadTimeout: 5 * time.Second,
 		WriteTimeout: 10 * time.Second,
