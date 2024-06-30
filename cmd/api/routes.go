@@ -22,8 +22,8 @@ func (a *application) routes() *httprouter.Router {
 	return router
 }
 
-func (a *application) panicHandler(w http.ResponseWriter, r *http.Request, _ any) {
+func (a *application) panicHandler(w http.ResponseWriter, r *http.Request, rcv any) {
 	w.Header().Set("Connection", "close")
 
-	a.serverErrorResponse(w, r, fmt.Errorf("%s", "something went wrong"))
+	a.serverErrorResponse(w, r, fmt.Errorf("%s", rcv))
 }
