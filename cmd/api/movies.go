@@ -5,19 +5,28 @@ import (
 	"time"
 
 	"github.com/captainmango/greenlight/internal/data"
+	"github.com/captainmango/greenlight/internal/validator"
 )
 
 func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	var movie data.Movie
+	var movieJson data.MovieJSON
 
-	err := a.readJSON(w, r, &movie)
+	err := a.readJSON(w, r, &movieJson)
 	if err != nil {
 		a.badRequestResponse(w, r, err)
 
 		return
 	}
 
-	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
+	v := validator.New()
+
+	if data.ValidateMovieJSON(v, &movieJson); !v.Valid() {
+		a.failedValidationResponse(w, r, v.Errors)
+
+		return
+	}
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movieJson}, nil)
 
 	if err != nil {
 		a.logError(r, err)
