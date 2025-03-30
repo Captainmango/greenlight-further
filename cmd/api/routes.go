@@ -7,7 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (a *application) routes() *httprouter.Router {
+func (a *application) routes() http.Handler {
 	router := httprouter.New()
 
 	router.PanicHandler = a.panicHandler
@@ -19,7 +19,7 @@ func (a *application) routes() *httprouter.Router {
 	router.HandlerFunc(http.MethodPost, "/v1/movies", a.createMovieHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", a.showMovieHandler)
 
-	return router
+	return a.recoverPanic(router)
 }
 
 func (a *application) panicHandler(w http.ResponseWriter, r *http.Request, rcv any) {
