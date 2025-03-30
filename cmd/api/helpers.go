@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
@@ -34,9 +35,11 @@ func (a *application) writeJSON(w http.ResponseWriter, status int, data any, hea
 
 	js = append(js, '\n')
 
-	for k, v := range headers {
-		w.Header()[k] = v
-	}
+	maps.Insert(w.Header(), maps.All(headers))
+	// Above is a nicer way of writing the below code. Go 1.24 is sick.
+	// for k, v := range headers {
+	// 	w.Header()[k] = v
+	// }
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
