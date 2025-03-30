@@ -39,7 +39,8 @@ type (
 
 func main() {
 	// Create the logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 	var cfg config
 	err := godotenv.Load()
 
