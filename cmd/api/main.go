@@ -14,6 +14,7 @@ import (
 	// package. Note that we alias this import to the blank identifier, to stop the Go
 	// compiler complaining that the package isn't being used.
 	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
@@ -34,18 +35,24 @@ type (
 )
 
 func main() {
+	// Create the logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	var cfg config
+	err := godotenv.Load()
 
+	if err != nil {
+		logger.Error("Failed to read .env")
+		os.Exit(1)
+	}
+	
 	/*
 		Get vars passed in as flags and set on a struct to be read later. Defaults provided
 	*/
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://test:password@localhost/greenlight?sslmode=disable", "PostgreSQL DSN")
+	flag.StringVar(&cfg.env, "env", os.Getenv("ENVIRONMENT"), "Environment (development|staging|production)")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("PG_DSN"), "PostgreSQL DSN")
 	flag.Parse()
 
-	// Create the logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.Error(err.Error())
