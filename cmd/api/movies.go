@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -26,7 +27,22 @@ func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movieJson}, nil)
+	movie := &data.Movie{
+		Title:   movieJson.Title,
+		Year:    movieJson.Year,
+		Runtime: movieJson.Runtime,
+		Genres:  movieJson.Genres,
+	}
+
+	if err = a.dao.Movies.Insert(movie); err != nil {
+		a.serverErrorResponse(w, r, err)
+		return
+	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, headers)
 
 	if err != nil {
 		a.logError(r, err)

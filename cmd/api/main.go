@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/captainmango/greenlight/internal/data"
+
 	// Import the pq driver so that it can register itself with the database/sql
 	// package. Note that we alias this import to the blank identifier, to stop the Go
 	// compiler complaining that the package isn't being used.
@@ -34,6 +36,7 @@ type (
 	application struct {
 		config config
 		logger *slog.Logger
+		dao    data.DataAccessObjects
 	}
 )
 
@@ -80,6 +83,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		dao:    data.NewDataAccessObjects(db),
 	}
 
 	server := &http.Server{
