@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/captainmango/greenlight/internal/data"
 	"github.com/captainmango/greenlight/internal/validator"
@@ -60,14 +60,16 @@ func (a *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Up",
-		Year:      2011,
-		Runtime:   190,
-		Genres:    []string{"kids", "comedy"},
-		Version:   1,
+	movie, err := a.dao.Movies.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+
+		return
 	}
 
 	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)

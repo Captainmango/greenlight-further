@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/captainmango/greenlight/internal/validator"
@@ -68,7 +69,38 @@ RETURNING id, created_at, version`
 }
 
 func (m MovieDAO) Get(id int64) (*Movie, error) {
-	return nil, nil
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	// specify the columns so if we change the schema the query doesn't break
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version 
+	FROM movies 
+	WHERE id = $1;
+	`
+
+	resultMovie := Movie{}
+	// Scan puts the values in the box. It does not translate things to the struct fields (annoying!!)
+	err := m.DB.QueryRow(query, id).Scan(&resultMovie.ID,
+		&resultMovie.CreatedAt,
+		&resultMovie.Title,
+		&resultMovie.Year,
+		&resultMovie.Runtime,
+		pq.Array(&resultMovie.Genres),
+		&resultMovie.Version,
+	)
+
+	// In the book, this is a switch. Kinda don't need it yet. Id we add more stuff, then I'll extract into a switch
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrRecordNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &resultMovie, nil
 }
 
 func (m MovieDAO) Update(movie *Movie) error {
