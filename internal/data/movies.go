@@ -75,10 +75,10 @@ func (m MovieDAO) Get(id int64) (*Movie, error) {
 
 	// specify the columns so if we change the schema the query doesn't break
 	query := `
-	SELECT id, created_at, title, year, runtime, genres, version 
-	FROM movies 
-	WHERE id = $1;
-	`
+SELECT id, created_at, title, year, runtime, genres, version 
+FROM movies 
+WHERE id = $1;
+`
 
 	resultMovie := Movie{}
 	// Scan puts the values in the box. It does not translate things to the struct fields (annoying!!)
@@ -91,7 +91,7 @@ func (m MovieDAO) Get(id int64) (*Movie, error) {
 		&resultMovie.Version,
 	)
 
-	// In the book, this is a switch. Kinda don't need it yet. Id we add more stuff, then I'll extract into a switch
+	// In the book, this is a switch. Kinda don't need it yet. If we add more stuff, then I'll extract into a switch
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
 	}
@@ -104,9 +104,50 @@ func (m MovieDAO) Get(id int64) (*Movie, error) {
 }
 
 func (m MovieDAO) Update(movie *Movie) error {
-	return nil
+	// Declare the SQL query for updating the record and returning the new version
+	// number.
+	query := `
+UPDATE movies
+SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+WHERE id = $5
+RETURNING version`
+	// Create an args slice containing the values for the placeholder parameters.
+	args := []any{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+	}
+	// Use the QueryRow() method to execute the query, passing in the args slice as a
+	// variadic parameter and scanning the new version value into the movie struct.
+	return m.DB.QueryRow(query, args...).Scan(&movie.Version)
 }
 
 func (m MovieDAO) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+DELETE FROM movies
+WHERE id = $1;
+`
+	args := []any{id}
+
+	res, err := m.DB.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+
+	rowsAffecred, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffecred == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }

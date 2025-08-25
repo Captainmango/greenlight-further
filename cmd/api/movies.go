@@ -80,3 +80,78 @@ func (a *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
 		a.serverErrorResponse(w, r, err)
 	}
 }
+
+func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	movieId, err := a.readIdParam(r)
+	if err != nil {
+		a.notFoundResponse(w, r)
+		return
+	}
+
+	movie, err := a.dao.Movies.Get(movieId)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+	}
+
+	updateMovie := data.MovieJSON{}
+
+	err = a.readJSON(w, r, &updateMovie)
+	if err != nil {
+		a.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+	if data.ValidateMovieJSON(v, &updateMovie); !v.Valid() {
+		a.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	movie.Title = updateMovie.Title
+	movie.Genres = updateMovie.Genres
+	movie.Year = updateMovie.Year
+	movie.Runtime = updateMovie.Runtime
+
+	err = a.dao.Movies.Update(movie)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+		return
+	}
+}
+
+func (a *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+	movieId, err := a.readIdParam(r)
+	if err != nil {
+		a.badRequestResponse(w, r, err)
+		return
+	}
+
+	err = a.dao.Movies.Delete(movieId)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+			return
+		default:
+			a.serverErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"message": "successfully deleted movie"}, nil)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+	}
+}
