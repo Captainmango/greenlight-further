@@ -69,6 +69,7 @@ func main() {
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
+		return
 	}
 
 	// Any of these being set to 0 will mean there is no limit

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -72,7 +73,9 @@ RETURNING id, created_at, version`
 	// Use the QueryRow() method to execute the SQL query on our connection pool,
 	// passing in the args slice as a variadic parameter and scanning the system-
 	// generated id, created_at and version values into the movie struct.
-	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 func (m MovieDAO) Get(id int64) (*Movie, error) {
@@ -86,10 +89,13 @@ SELECT id, created_at, title, year, runtime, genres, version
 FROM movies 
 WHERE id = $1;
 `
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	resultMovie := Movie{}
 	// Scan puts the values in the box. It does not translate things to the struct fields (annoying!!)
-	err := m.DB.QueryRow(query, id).Scan(&resultMovie.ID,
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&resultMovie.ID,
 		&resultMovie.CreatedAt,
 		&resultMovie.Title,
 		&resultMovie.Year,
@@ -98,13 +104,13 @@ WHERE id = $1;
 		&resultMovie.Version,
 	)
 
-	// In the book, this is a switch. Kinda don't need it yet. If we add more stuff, then I'll extract into a switch
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrRecordNotFound
-	}
-
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	return &resultMovie, nil
@@ -128,7 +134,10 @@ RETURNING version`
 		movie.Version,
 	}
 
-	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -152,7 +161,10 @@ WHERE id = $1;
 `
 	args := []any{id}
 
-	res, err := m.DB.Exec(query, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res, err := m.DB.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
