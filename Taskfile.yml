@@ -9,3 +9,4 @@ tasks:
     cmds:
       - go run ./cmd/api
     silent: true
+    ignore_error: true
