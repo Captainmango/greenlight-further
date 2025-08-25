@@ -9,6 +9,13 @@ import (
 	"github.com/lib/pq"
 )
 
+type MovieUpdateJSON struct {
+	Title   *string  `json:"title"`
+	Year    *int32   `json:"year"`
+	Runtime *Runtime `json:"runtime"`
+	Genres  []string `json:"genres"`
+}
+
 type Movie struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"-"`
@@ -30,7 +37,7 @@ type MovieDAO struct {
 	DB *sql.DB
 }
 
-func ValidateMovieJSON(v *validator.Validator, movie *MovieJSON) {
+func ValidateMovieJSON(v *validator.Validator, movie *Movie) {
 	// TITLE VALIDATIONS
 	v.Check(movie.Title != "", "title", "title cannot be empty")
 	v.Check(len(movie.Title) <= 500, "title", "title must be less than 500 bytes long")
@@ -109,7 +116,7 @@ func (m MovieDAO) Update(movie *Movie) error {
 	query := `
 UPDATE movies
 SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-WHERE id = $5
+WHERE id = $5 AND version = $6
 RETURNING version`
 	// Create an args slice containing the values for the placeholder parameters.
 	args := []any{
@@ -118,10 +125,20 @@ RETURNING version`
 		movie.Runtime,
 		pq.Array(movie.Genres),
 		movie.ID,
+		movie.Version,
 	}
-	// Use the QueryRow() method to execute the query, passing in the args slice as a
-	// variadic parameter and scanning the new version value into the movie struct.
-	return m.DB.QueryRow(query, args...).Scan(&movie.Version)
+
+	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m MovieDAO) Delete(id int64) error {

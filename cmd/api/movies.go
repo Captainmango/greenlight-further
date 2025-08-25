@@ -10,19 +10,16 @@ import (
 )
 
 func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	var movieJson data.MovieJSON
+	var movieJson struct {
+		Title   string       `json:"title"`
+		Year    int32        `json:"year,omitzero"`
+		Runtime data.Runtime `json:"runtime,omitzero"`
+		Genres  []string     `json:"genres,omitempty"`
+	}
 
 	err := a.readJSON(w, r, &movieJson)
 	if err != nil {
 		a.badRequestResponse(w, r, err)
-
-		return
-	}
-
-	v := validator.New()
-
-	if data.ValidateMovieJSON(v, &movieJson); !v.Valid() {
-		a.failedValidationResponse(w, r, v.Errors)
 
 		return
 	}
@@ -32,6 +29,14 @@ func (a *application) createMovieHandler(w http.ResponseWriter, r *http.Request)
 		Year:    movieJson.Year,
 		Runtime: movieJson.Runtime,
 		Genres:  movieJson.Genres,
+	}
+
+	v := validator.New()
+
+	if data.ValidateMovieJSON(v, movie); !v.Valid() {
+		a.failedValidationResponse(w, r, v.Errors)
+
+		return
 	}
 
 	if err = a.dao.Movies.Insert(movie); err != nil {
@@ -82,6 +87,13 @@ func (a *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	var updateMovieJson struct {
+		Title   *string       `json:"title"`
+		Year    *int32        `json:"year"`
+		Runtime *data.Runtime `json:"runtime"`
+		Genres  []string      `json:"genres"`
+	}
+
 	movieId, err := a.readIdParam(r)
 	if err != nil {
 		a.notFoundResponse(w, r)
@@ -98,28 +110,44 @@ func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	updateMovie := data.MovieJSON{}
-
-	err = a.readJSON(w, r, &updateMovie)
+	err = a.readJSON(w, r, &updateMovieJson)
 	if err != nil {
 		a.badRequestResponse(w, r, err)
 		return
 	}
 
+
+	if updateMovieJson.Title != nil {
+		movie.Title = *updateMovieJson.Title
+	}
+
+	if updateMovieJson.Genres != nil {
+		movie.Genres = updateMovieJson.Genres
+	}
+
+	if updateMovieJson.Year != nil {
+		movie.Year = *updateMovieJson.Year
+	}
+
+	if updateMovieJson.Runtime != nil {
+		movie.Runtime = *updateMovieJson.Runtime
+	}
+
 	v := validator.New()
-	if data.ValidateMovieJSON(v, &updateMovie); !v.Valid() {
+	if data.ValidateMovieJSON(v, movie); !v.Valid() {
 		a.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	movie.Title = updateMovie.Title
-	movie.Genres = updateMovie.Genres
-	movie.Year = updateMovie.Year
-	movie.Runtime = updateMovie.Runtime
-
 	err = a.dao.Movies.Update(movie)
 	if err != nil {
-		a.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			a.editConfilctResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+
 		return
 	}
 
