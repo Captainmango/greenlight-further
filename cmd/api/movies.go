@@ -183,3 +183,7 @@ func (a *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request)
 		a.serverErrorResponse(w, r, err)
 	}
 }
+
+func (a *application) getMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	
+}
