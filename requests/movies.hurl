@@ -12,5 +12,9 @@ POST http://localhost:4000/v1/movies
     "year": 2016
 }
 ```
+HTTP/1.1 200
+[Captures]
+testMovieId: jsonpath "$.movie.id"
 
-DELETE http://localhost:4000/v1/movies/1
+# DELETE - remove a movie by id
+DELETE http://localhost:4000/v1/movies/{{testMovieId}}
