@@ -11,7 +11,8 @@
         "ghcr.io/devcontainers/features/go:1": {
             "version": "1.24"
         },
-        "ghcr.io/devcontainers/features/git:1": {}
+        "ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers-extra/features/go-task": {}
     },
 
 	// Configure tool-specific properties.
@@ -20,7 +21,7 @@
             "extensions": [
                 "golang.go",
                 "task.vscode-task",
-                "rangav.vscode-thunder-client"
+				"dbcode.dbcode"
             ]
         }
     },

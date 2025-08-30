@@ -10,7 +10,11 @@ services:
       dockerfile: Dockerfile
     env_file:
         # Ensure that the variables in .env match the same variables in devcontainer.json
+<<<<<<< Updated upstream
         - dev.env
+=======
+        - .env.dev
+>>>>>>> Stashed changes
 
     volumes:
       - ../..:/workspaces:cached
@@ -31,7 +35,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
     env_file:
       # Ensure that the variables in .env match the same variables in devcontainer.json
-      - dev.env
+      - .env.dev
 
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
