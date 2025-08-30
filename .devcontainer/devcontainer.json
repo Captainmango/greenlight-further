@@ -12,7 +12,8 @@
             "version": "1.24"
         },
         "ghcr.io/devcontainers/features/git:1": {},
-		"ghcr.io/devcontainers-extra/features/go-task": {}
+		"ghcr.io/devcontainers-extra/features/go-task": {},
+		"ghcr.io/devcontainers/features/docker-in-docker": {}
     },
 
 	// Configure tool-specific properties.
@@ -21,7 +22,9 @@
             "extensions": [
                 "golang.go",
                 "task.vscode-task",
-				"dbcode.dbcode"
+				"dbcode.dbcode",
+				"jellydn.vscode-hurl-runner",
+				"JacobPfeifer.pfeifer-hurl"
             ]
         }
     },
