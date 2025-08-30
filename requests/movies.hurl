@@ -12,3 +12,5 @@ POST http://localhost:4000/v1/movies
     "year": 2016
 }
 ```
+
+DELETE http://localhost:4000/v1/movies/1
