@@ -5,8 +5,28 @@ version: '3'
 tasks:
 
   dev:
+    cmds:
+      - air -c .air.toml
+    silent: true
+  
+  connect-db:*:*:
+    vars:
+      CONTAINER_NAME: "{{index .MATCH 0}}"
+      DB_NAME: "{{index .MATCH 1}}"
+    cmds:
+      - docker exec -it {{.CONTAINER_NAME}} psql -U test -d {{.DB_NAME}}
+    silent: true
+  
+  migrate-db:
     dotenv: [".env"]
     cmds:
-      - go run ./cmd/api
+      - migrate -path=./migrations -database=postgres://test:password@localhost:5432/greenlight?sslmode=disable {{.CLI_ARGS}}
     silent: true
-    ignore_error: true
+  
+  setup:
+    cmds:
+      - go install github.com/air-verse/air@latest
+      - go install github.com/go-delve/delve/cmd/dlv@latest
+      - go mod tidy
+      - |
+        cat .env.testing > .env
