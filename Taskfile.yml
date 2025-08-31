@@ -20,12 +20,13 @@ tasks:
   migrate-db:
     dotenv: [".env"]
     cmds:
-      - migrate -path=./migrations -database=${PG_DNS} {{.CLI_ARGS}}
+      - migrate -path=./migrations -database=${PG_DSN} {{.CLI_ARGS}}
     silent: true
   
   setup:
     cmds:
       - go install github.com/air-verse/air@latest
       - go install github.com/go-delve/delve/cmd/dlv@latest
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
       - go mod tidy
       - cat .env.testing > .env

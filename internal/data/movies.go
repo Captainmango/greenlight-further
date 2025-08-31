@@ -180,3 +180,39 @@ WHERE id = $1;
 
 	return nil
 }
+
+func (m MovieDAO) GetAll() ([]Movie, error) {
+	query := `
+SELECT id, created_at, title, year, runtime, genres, version 
+FROM movies;
+`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	movies := []Movie{}
+	for rows.Next() {
+		resultMovie := Movie{}
+		rows.Scan(
+			&resultMovie.ID,
+			&resultMovie.CreatedAt,
+			&resultMovie.Title,
+			&resultMovie.Year,
+			&resultMovie.Runtime,
+			pq.Array(&resultMovie.Genres),
+			&resultMovie.Version,
+		)
+		movies = append(movies, resultMovie)
+	}
+
+	return movies, nil
+}

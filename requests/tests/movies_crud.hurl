@@ -1,7 +1,3 @@
-# GET - fetch all Movies
-GET http://localhost:4000/v1/movies
-HTTP/1.1 200
-
 # POST - create a movie
 POST http://localhost:4000/v1/movies
 ```json
@@ -20,6 +16,17 @@ jsonpath "$.movie.title" == "Test movie2"
 jsonpath "$.movie.runtime" contains "100"
 jsonpath "$.movie.year" == 2016
 jsonpath "$.movie.version" == 1
+
+
+# GET - fetch all Movies
+GET http://localhost:4000/v1/movies
+HTTP/1.1 200
+[Asserts]
+# jsonpath "$.movies[0].title" == "Test movie2"
+# jsonpath "$.movies[0].runtime" contains "100"
+# jsonpath "$.movies[0].year" == 2016
+# jsonpath "$.movies[0].version" == 1
+
 
 
 # GET - fetch movie by ID
