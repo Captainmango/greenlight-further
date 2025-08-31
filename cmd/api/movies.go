@@ -185,5 +185,5 @@ func (a *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (a *application) getMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	
+	a.writeJSON(w, http.StatusOK, envelope{"test": "value"}, nil)
 }
