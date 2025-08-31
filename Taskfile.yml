@@ -20,7 +20,7 @@ tasks:
   migrate-db:
     dotenv: [".env"]
     cmds:
-      - migrate -path=./migrations -database=postgres://test:password@localhost:5432/greenlight?sslmode=disable {{.CLI_ARGS}}
+      - migrate -path=./migrations -database=${PG_DNS} {{.CLI_ARGS}}
     silent: true
   
   setup:
@@ -28,5 +28,4 @@ tasks:
       - go install github.com/air-verse/air@latest
       - go install github.com/go-delve/delve/cmd/dlv@latest
       - go mod tidy
-      - |
-        cat .env.testing > .env
+      - cat .env.testing > .env
